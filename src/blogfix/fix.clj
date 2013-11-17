@@ -20,26 +20,6 @@
 (defn domain-name [url]
   (->> (re-find #"http[s]?://([^/]+)/.*" url) second))
 
-(defn create-article-link-externalizer [url]
-  (let [domain (domain-name url)]
-    (fn [node]
-      (let [href (->> (html/attr-values node :href) first)]
-        ((html/set-attr :href (str "https://" domain href)) node)))))
-
-(defn create-fd-link-externalizer [url]
-  (let [domain (domain-name url)]
-    (fn [node]
-      (let [href (->> (html/attr-values node :href) first)]
-        ((html/set-attr :href (replace href domain "commons.wikimedia.org"))
-         node)))))
-
-(defn externalize-srcset-url [node]
-  (let [url-size-pairs (-> node :attrs :srcset (split #","))
-        externalize-url-size-pairs (map #(str "https:" (trim %))
-                                        url-size-pairs)]
-    ((html/set-attr :srcset (->> (interpose "," externalize-url-size-pairs)
-                                 (apply str))) node)))
-
 (defn link-attr [node]
   (or (and (html/attr-values node :href) :href)
       (and (html/attr-values node :src) :src)))
@@ -48,9 +28,6 @@
   (->> (or (html/attr-values node :href)
            (html/attr-values node :src))
        first))
-
-(defn externalize-url [node]
-  ((html/set-attr (link-attr node) (str "https:" (link-dest node))) node))
 
 (def media-base-url "https://upload.wikimedia.org/wikipedia/commons")
 
@@ -131,39 +108,46 @@
       (remove-class cls)
       (html/set-attr :style style)) node)))
 
+(defn do-fix-link [domain s]
+  (cond
+   (re-find #"^/wiki/" s) (str "https://" domain s)
+   (re-find #"^//" s) (str "https:" s)
+   (re-find #"/wiki/File" s) (replace s domain "commons.wikimedia.org")
+   :else s))
+
+(defn create-fix-link [url]
+  (let [domain (domain-name url)]
+    (fn [node]
+      ((html/set-attr (link-attr node)
+                      (do-fix-link domain (link-dest node))) node))))
+
+(defn fix-srcset [node]
+  (let [url-size-pairs (-> node :attrs :srcset (split #","))
+        fixed-url-size-pairs (map #(str "https:" (trim %))
+                                  url-size-pairs)]
+    ((html/set-attr :srcset (->> (interpose "," fixed-url-size-pairs)
+                                 (apply str))) node)))
+
 (defn transform [article]
   (let [body (->> (fetch-article article) :body)
-        externalize-article-link (create-article-link-externalizer
-                                  (create-url article))
-        externalize-fd-link (create-fd-link-externalizer
-                             (create-url article))]
+        fix-link (create-fix-link (create-url article))]
     (html/at (html/html-snippet body)
-             [[:a (html/attr-starts :href "/wiki")]] externalize-article-link
-             [[:.external #{[:.text :.free :.autonumber]}
-               (html/attr-has :rel "nofollow")]]
+             [#{(html/attr? :href) (html/attr? :src)}] fix-link
+             [(html/attr? :srcset)] fix-srcset
+             [[:.external #{[:.text :.free :.autonumber]}]]
              (html/do->
               (html/remove-class "external"
                                  "text"
                                  "free"
                                  "autonumber")
               (html/remove-attr :rel))
-             [[:.external #{[:.text :.free :.autonumber]}]]
-             (html/do->
-              (html/remove-class "external"
-                                 "text"
-                                 "free"
-                                 "autonumber"))
              [(->> (keys style-fixes) (into #{}))] fix-style
              [[:img
                (html/attr-ends :src "skins/common/images/magnify-clip.png")]]
              stabilize-magnify-url
              [[:img
                (html/attr-ends :src "extensions/OggHandler/play.png")]]
-             stabilize-videoplayer-url
-             [[(html/attr-starts :href "//")]] externalize-url
-             [[(html/attr-starts :src "//")]] externalize-url
-             [[(html/attr-starts :srcset "//")]] externalize-srcset-url
-             [[(html/attr-contains :href "/wiki/File:")]] externalize-fd-link)))
+             stabilize-videoplayer-url)))
 
 (defn fix-article [article]
   (->> (transform article) html/emit* (apply str)))
