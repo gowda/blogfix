@@ -52,115 +52,6 @@
 (defn externalize-url [node]
   ((html/set-attr (link-attr node) (str "https:" (link-dest node))) node))
 
-(defn add-center-style [node]
-  ((html/do->
-    (html/set-attr :style "text-align: center;")
-    (html/remove-class "center")) node))
-
-(defn add-thumbnail-right-style [node]
-  ((html/do->
-    (html/set-attr :style (str "text-align: center;"
-                               "border:1px solid #ccc;"
-                               "margin:2px;"
-                               "float:right;"
-                               "clear:right;"
-                               "margin:0.5em 0 0.8em 1.4em;"))
-    (html/remove-class "thumb" "tright")) node))
-
-(defn add-thumbnail-left-style [node]
-  ((html/do->
-    (html/set-attr :style (str "text-align: center;"
-                               "border: 1px solid #ccc;"
-                               "margin: 2px;"
-                               "float: left;"
-                               "clear: left;"
-                               "margin: 0.5em 1.4em 0.8em 0;"))
-    (html/remove-class "thumb" "tleft")) node))
-
-(defn add-thumbinner-style [node]
-  ((html/do->
-    (html/set-attr :style (str "padding: 3px !important;"
-                               "border: 1px solid rgb(204, 204, 204);"
-                               "text-align: center;"
-                               "overflow: hidden;"
-                               "font-size: 94%;"
-                               "background-color: white;"
-                               "display: block;"
-                               "margin-left: auto;"
-                               "margin-right: auto;"))
-    (html/remove-class "thumbinner")) node))
-
-(defn add-thumbimage-style [node]
-  ((html/do->
-    (html/set-attr :style "border:1px solid #ccc;")
-    (html/remove-class "thumbimage")) node))
-
-(defn add-thumbcaption-style [node]
-  ((html/do->
-    (html/set-attr :style (str "border: none;"
-                               "text-align: left;"
-                               "line-height: 1.4em;"
-                               "padding: 3px !important;"
-                               "font-size: 94%;"))
-    (html/remove-class "thumbcaption")) node))
-
-(defn add-magnify-style [node]
-  ((html/do->
-    (html/set-attr :style (str "float: right;"
-                               "border: none !important;"
-                               "background: none !important;"))
-    (html/remove-class "magnify")) node))
-
-(defn add-gallery-style [node]
-  ((html/do->
-    (html/set-attr :style (str "margin: 2px;"
-                               "padding: 2px;"
-                               "display: block;"))
-    (html/remove-class "gallery")) node))
-
-(defn add-gallerybox-style [node]
-  ((html/do->
-    (html/set-attr :style (str "vertical-align: top;"
-                               "display: -moz-inline-box;"
-                               "display: inline-block;"))
-    (html/remove-class "gallerybox")) node))
-
-(defn add-gallerytext-style [node]
-  ((html/do->
-    (html/set-attr :style (str "overflow: hidden;"
-                               "font-size: 94%;"
-                               "padding: 2px 4px;"
-                               "word-wrap: break-word;"))
-    (html/remove-class "gallerytext")) node))
-
-(defn add-thumb-style [node]
-  ((html/do->
-    (html/set-attr :style (str "text-align: center;"
-                               "border: 1px solid #ccc;"
-                               "margin: 2px;"))
-    (html/remove-class "thumb")) node))
-
-(defn replace-class-by-style [node cls style]
-  ((html/do->
-    (html/set-attr :style style)
-    (html/remove-class cls))
-   node))
-
-(defn add-sc2-style [node]
-  (replace-class-by-style node "sc2" "color: #009900;"))
-
-(defn add-kw2-style [node]
-  (replace-class-by-style node "kw2" "color: #000000; font-weight: bold;"))
-
-(defn add-kw3-style [node]
-  (replace-class-by-style node "kw3" "color: #000066;"))
-
-(defn add-sy0-style [node]
-  (replace-class-by-style node "sy0" "color: #66cc66;"))
-
-(defn add-st0-style [node]
-  (replace-class-by-style node "st0" "color: #ff0000;"))
-
 (def media-base-url "https://upload.wikimedia.org/wikipedia/commons")
 
 (def stable-magnify-url (str media-base-url "/6/6b/Magnify-clip.png"))
@@ -171,6 +62,74 @@
                                  "/9/96/Crystal_Project_Player_play.png"))
 (defn stabilize-videoplayer-url [node]
   ((html/set-attr :src stable-videoplayer-url) node))
+
+(def style-fixes {:.center "text-align: center;"
+                  :.thumb.tright (str "text-align: center;"
+                                      "border:1px solid #ccc;"
+                                      "margin:2px;"
+                                      "float:right;"
+                                      "clear:right;"
+                                      "margin:0.5em 0 0.8em 1.4em;")
+                  :.thumb.tleft (str "text-align: center;"
+                                     "border: 1px solid #ccc;"
+                                     "margin: 2px;"
+                                     "float: left;"
+                                     "clear: left;"
+                                     "margin: 0.5em 1.4em 0.8em 0;")
+                  :.thumbinner (str "padding: 3px !important;"
+                                    "border: 1px solid rgb(204, 204, 204);"
+                                    "text-align: center;"
+                                    "overflow: hidden;"
+                                    "font-size: 94%;"
+                                    "background-color: white;"
+                                    "display: block;"
+                                    "margin-left: auto;"
+                                    "margin-right: auto;")
+                  :.thumbimage "border:1px solid #ccc;"
+                  :.thumbcaption (str "border: none;"
+                                      "text-align: left;"
+                                      "line-height: 1.4em;"
+                                      "padding: 3px !important;"
+                                      "font-size: 94%;")
+                  :.magnify (str "float: right;"
+                                 "border: none !important;"
+                                 "background: none !important;")
+                  :.gallery (str "margin: 2px;"
+                                 "padding: 2px;"
+                                 "display: block;")
+                  :.gallerybox (str "vertical-align: top;"
+                                    "display: -moz-inline-box;"
+                                    "display: inline-block;")
+                  :.gallerytext (str "overflow: hidden;"
+                                     "font-size: 94%;"
+                                     "padding: 2px 4px;"
+                                     "word-wrap: break-word;")
+                  :.thumb (str "text-align: center;"
+                               "border: 1px solid #ccc;"
+                               "margin: 2px;")
+                  :.sc2 "color: #009900;"
+                  :.kw2 "color: #000000; font-weight: bold;"
+                  :.kw3 "color: #000066;"
+                  :.sy0 "color: #66cc66;"
+                  :.st0 "color: #ff0000;"})
+
+(defn classes-to-str-seq [cls]
+  (->> (split (name cls) #"\.") (remove #(= 0 (count %)))))
+
+(defn create-class-matcher [node]
+  (fn [[cls style]]
+    (let [classes (->> (classes-to-str-seq cls) sort)]
+      (= (->> (html/attr-values node :class) sort) classes))))
+
+(defn remove-class [cls]
+  (let [classes (classes-to-str-seq cls)]
+    (apply html/remove-class classes)))
+
+(defn fix-style [node]
+  (let [[[cls style] & _] (filter (create-class-matcher node) style-fixes)]
+    ((html/do->
+      (remove-class cls)
+      (html/set-attr :style style)) node)))
 
 (defn transform [article]
   (let [body (->> (fetch-article article) :body)
@@ -194,22 +153,7 @@
                                  "text"
                                  "free"
                                  "autonumber"))
-             [:.center] add-center-style
-             [[:.thumb :.tright]] add-thumbnail-right-style
-             [[:.thumb :.tleft]] add-thumbnail-left-style
-             [:.thumbinner] add-thumbinner-style
-             [:.thumbimage] add-thumbimage-style
-             [:.thumbcaption] add-thumbcaption-style
-             [:.magnify] add-magnify-style
-             [:.gallery] add-gallery-style
-             [:.gallerybox] add-gallerybox-style
-             [:.gallerytext] add-gallerytext-style
-             [:.thumb] add-thumb-style
-             [:.sc2] add-sc2-style
-             [:.kw2] add-kw2-style
-             [:.kw3] add-kw3-style
-             [:.sy0] add-sy0-style
-             [:.st0] add-st0-style
+             [(->> (keys style-fixes) (into #{}))] fix-style
              [[:img
                (html/attr-ends :src "skins/common/images/magnify-clip.png")]]
              stabilize-magnify-url
